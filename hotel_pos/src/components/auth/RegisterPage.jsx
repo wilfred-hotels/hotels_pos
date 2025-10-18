@@ -8,6 +8,7 @@ export default function RegisterPage({ onRegistered }) {
   const [user, setUser] = useState({ username: '', password: '', role: 'manager' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -16,9 +17,11 @@ export default function RegisterPage({ onRegistered }) {
     try {
       const payload = { hotel, user };
       const res = await AuthAPI.register(payload);
-      if (onRegistered) onRegistered(res);
+      setToast({ type: 'success', text: 'Hotel and admin created' });
+      setTimeout(() => { if (onRegistered) onRegistered(res); }, 600);
     } catch (err) {
       setError(err);
+      setToast({ type: 'error', text: err?.message || 'Registration failed' });
     } finally {
       setLoading(false);
     }
@@ -168,6 +171,16 @@ export default function RegisterPage({ onRegistered }) {
 
             </div>
           </form>
+
+          {/* Toast */}
+          {toast && (
+            <div className={`absolute top-6 right-6 z-50 max-w-sm ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-3 rounded-md shadow-lg`}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-sm">{toast.text}</div>
+                <button onClick={() => setToast(null)} className="text-white/80 text-xs">Dismiss</button>
+              </div>
+            </div>
+          )}
 
           <p className="text-center text-sm text-white/80 mt-5">
             Already have an account? <a href="/login" className="font-semibold underline">Sign in</a>

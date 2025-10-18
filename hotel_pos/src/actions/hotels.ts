@@ -1,31 +1,48 @@
-import { apiFetch } from './client';
 import { API } from './index';
 
-const DUMMY_HOTELS = [
-	{ id: 'hotel-1', name: 'Seaside Hotel', city: 'Mombasa' },
-	{ id: 'hotel-2', name: 'Mountain View Inn', city: 'Nairobi' },
-	{ id: 'hotel-3', name: 'Downtown Suites', city: 'Kisumu' },
-];
+async function parseJsonSafe(res: Response) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : undefined;
+  } catch (e) {
+    return text;
+  }
+}
 
-export const listHotels = async (params?: Record<string, string | number>) => {
-	// if API base is not configured, return dummy data
-	try {
-		const base = (API && (API as any).base) || '';
-		if (!base) return DUMMY_HOTELS;
-		const data = await apiFetch(API.hotels, { params });
-		if (Array.isArray(data)) return data;
-		if (data && Array.isArray((data as any).data)) return (data as any).data;
-		return DUMMY_HOTELS;
-	} catch (e) {
-		return DUMMY_HOTELS;
-	}
-};
+function ensureArrayOrItems(parsed: any) {
+  if (!parsed) return [];
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed.data)) return parsed.data;
+  if (Array.isArray(parsed.items)) return parsed.items;
+  return [];
+}
 
-export const getHotel = async (id: string | number) => {
-	try {
-		const data = await apiFetch(API.hotel(String(id)));
-		return data;
-	} catch (e) {
-		return DUMMY_HOTELS.find(h => h.id === String(id)) || null;
-	}
-};
+export async function getHotels(): Promise<any[]> {
+  const res = await fetch(API.hotels);
+  if (!res.ok) throw new Error('Failed to fetch hotels');
+  const parsed = await parseJsonSafe(res);
+  const list = ensureArrayOrItems(parsed) as any[];
+  // normalize shape and provide safe defaults for nullable fields
+  return list.map(h => ({
+    id: String(h.id || h._id || ''),
+    name: h.name || 'Unnamed Hotel',
+    address: h.address || '',
+    city: h.city || '',
+    country: h.country || '',
+    phone: h.phone || '',
+    openingTime: h.openingTime || '',
+    closingTime: h.closingTime || '',
+    imageUrl: h.imageUrl || '',
+    description: h.description || '',
+    workersCount: typeof h.workersCount === 'number' ? h.workersCount : (h.workers_count || 0),
+  }));
+}
+
+export async function getHotel(id: string): Promise<any> {
+  const res = await fetch(API.hotel(id));
+  if (!res.ok) throw new Error('Failed to fetch hotel');
+  return (await parseJsonSafe(res)) as any;
+}
+
+// Backwards-compatible wrapper
+export const listHotels = async (params?: Record<string, string | number>) => getHotels();
