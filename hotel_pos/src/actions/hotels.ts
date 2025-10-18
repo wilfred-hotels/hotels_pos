@@ -1,5 +1,22 @@
 import { API } from './index';
 
+interface hotelUserCreate {
+  hotel: {
+    name: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    phone?: string;
+    openingTime?: string;
+    closingTime?: string;
+    imageUrl?: string;
+    description?: string;
+    workersCount?: number;
+  };
+  admin: { username: string; password: string };
+
+}
+
 async function parseJsonSafe(res: Response) {
   const text = await res.text();
   try {
@@ -46,3 +63,18 @@ export async function getHotel(id: string): Promise<any> {
 
 // Backwards-compatible wrapper
 export const listHotels = async (params?: Record<string, string | number>) => getHotels();
+
+export async function createUserAndHotel(hotelUserCreate : any) {
+  console.log(hotelUserCreate)
+  const res = await fetch(API.hotels, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(hotelUserCreate),
+    });
+
+  if (res.status === 201) {
+    return "hotel and the user created"
+  } else {
+    throw new Error("failed to create the hotel")
+  }
+}

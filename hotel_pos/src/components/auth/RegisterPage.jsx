@@ -1,27 +1,36 @@
 "use client";
 import React, { useState } from "react";
-import * as AuthAPI from "../../actions/auth";
 import { motion } from "framer-motion";
+import { createUserAndHotel } from "../../actions/hotels";
+import toast from 'react-hot-toast';
 
 export default function RegisterPage({ onRegistered }) {
   const [hotel, setHotel] = useState({ name: '', address: '', city: '', country: '', phone: '', openingTime: '', closingTime: '', imageUrl: '', description: '', workersCount: 0 });
   const [user, setUser] = useState({ username: '', password: '', role: 'manager' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const payload = { hotel, user };
-      const res = await AuthAPI.register(payload);
-      setToast({ type: 'success', text: 'Hotel and admin created' });
-      setTimeout(() => { if (onRegistered) onRegistered(res); }, 600);
+      const payload = { hotel, admin: user };
+      const res = await createUserAndHotel(payload);
+      toast.success('Hotel and admin created');
+      // show inline success and redirecting message, then navigate after a short delay
+      setSuccess(true);
+      setTimeout(() => { if (onRegistered) onRegistered(res); }, 1800);
     } catch (err) {
       setError(err);
-      setToast({ type: 'error', text: err?.message || 'Registration failed' });
+      // show server validation messages if provided
+      if (err && err.data && err.data.message) {
+        const msg = Array.isArray(err.data.message) ? err.data.message.join(', ') : err.data.message;
+        toast.error(msg);
+      } else {
+        toast.error(err?.message || 'Registration failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,10 +76,19 @@ export default function RegisterPage({ onRegistered }) {
             Register a hotel and an initial admin user to get started.
           </p>
 
-            <h3 className="text-center italic mb-5 underline decoration-2 text-black text-lg font-semibold tracking-wide">
-              Hotel Details
-            </h3>
+          <h3 className="text-center italic mb-5 underline decoration-2 text-black text-lg font-semibold tracking-wide">
+            Hotel Details
+          </h3>
           <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+            {/* Inline success panel shown after a successful registration */}
+            {success && (
+              <div className="md:col-span-2 bg-green-700/80 border border-green-600 p-4 rounded-md mb-4">
+                <div className="font-semibold text-white">Registration successful</div>
+                <div className="text-sm text-white/90">Hotel and admin were created successfully.</div>
+                <div className="text-sm mt-2"> <span className="text-blue-300 font-semibold">Redirecting to login...</span> </div>
+              </div>
+            )}
 
             <input
               placeholder="Hotel name"
@@ -88,10 +106,10 @@ export default function RegisterPage({ onRegistered }) {
             />
 
             <input
-              placeholder="Address"
+              placeholder="Phone"
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              value={hotel.address}
-              onChange={e => setHotel({ ...hotel, address: e.target.value })}
+              value={hotel.phone}
+              onChange={e => setHotel({ ...hotel, phone: e.target.value })}
             />
 
             <input
@@ -100,15 +118,15 @@ export default function RegisterPage({ onRegistered }) {
               value={hotel.country}
               onChange={e => setHotel({ ...hotel, country: e.target.value })}
             />
-
             <input
-              placeholder="Phone"
+              placeholder="Address"
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              value={hotel.phone}
-              onChange={e => setHotel({ ...hotel, phone: e.target.value })}
+              value={hotel.address}
+              onChange={e => setHotel({ ...hotel, address: e.target.value })}
             />
 
-            <input
+
+            {/* <input
               placeholder="Opening Time (08:00)"
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               value={hotel.openingTime}
@@ -120,20 +138,20 @@ export default function RegisterPage({ onRegistered }) {
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               value={hotel.closingTime}
               onChange={e => setHotel({ ...hotel, closingTime: e.target.value })}
-            />
-            <input
+            /> */}
+            {/* <input
               placeholder="Workers Count"
               type="number"
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               value={hotel.workersCount}
               onChange={e => setHotel({ ...hotel, workersCount: Number(e.target.value) })}
-            />
-            <textarea
+            /> */}
+            {/* <textarea
               placeholder="Description"
               className="md:col-span-2 w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none h-28 resize-y"
               value={hotel.description}
               onChange={e => setHotel({ ...hotel, description: e.target.value })}
-            />
+            /> */}
 
             <h3 className="md:col-span-2 text-center italic underline decoration-2 text-black text-lg font-semibold tracking-wide">
               User Details
@@ -166,21 +184,13 @@ export default function RegisterPage({ onRegistered }) {
                 type="submit"
                 disabled={loading}
               >
-                {loading ? 'Creating...' : 'Create Hotel & Admin'}
+                {loading ? 'Registering...' : 'Create Hotel & Admin'}
               </motion.button>
 
             </div>
           </form>
 
-          {/* Toast */}
-          {toast && (
-            <div className={`absolute top-6 right-6 z-50 max-w-sm ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-3 rounded-md shadow-lg`}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="text-sm">{toast.text}</div>
-                <button onClick={() => setToast(null)} className="text-white/80 text-xs">Dismiss</button>
-              </div>
-            </div>
-          )}
+          {/* toasts rendered via react-hot-toast <Toaster /> in App.jsx */}
 
           <p className="text-center text-sm text-white/80 mt-5">
             Already have an account? <a href="/login" className="font-semibold underline">Sign in</a>
