@@ -45,6 +45,7 @@ export default function OrdersSection(){
         <span>127 stars</span>
       </div>
     </div>
-    
+    </div>
+    </div>
   );
 }

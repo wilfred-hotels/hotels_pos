@@ -1,6 +1,17 @@
-// use Vite's import.meta.env in the browser; fall back to empty string
-const envBase = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.NEXT_PUBLIC_API_BASE) || '';
-const BASE = String(envBase || '').replace(/\/+$/, '');
+// Resolve API base from environment in a robust way:
+// 1) Vite's import.meta.env (browser builds)
+// 2) process.env (Node / some runners)
+// 3) empty string fallback
+
+/// <reference types="vite/client" />
+interface ImportMetaEnv {
+  readonly VITE_BACKEND_URL?: string;
+}
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+const BASE = import.meta.env.VITE_BACKEND_URL ?? '';
 
 export const API = {
   products: `${BASE}/products`,
