@@ -58,8 +58,8 @@ export default function LoginPage({ onLogin }) {
         </p>
       </motion.header>
 
-      {/* 🌆 Background Carousel */}
-      <Carousel hotels={hotels} />
+  {/* 🌆 Background Carousel */}
+  <Carousel />
 
       {/* Floating Login Card */}
       <motion.div
@@ -68,7 +68,7 @@ export default function LoginPage({ onLogin }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
       >
-        <div className="bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl rounded-3xl w-full max-w-md p-8 md:p-10 text-white">
+  <div className="bg-blue-900/70 backdrop-blur-2xl border border-blue-700/40 shadow-2xl rounded-3xl w-full max-w-md p-8 md:p-10 text-white">
           <motion.h2
             className="text-4xl font-extrabold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500"
             initial={{ y: -20, opacity: 0 }}
@@ -134,7 +134,7 @@ export default function LoginPage({ onLogin }) {
 
           <p className="text-center text-sm text-white/80 mt-5">
             Don’t have an account?{" "}
-            <a href="#/register" className="font-semibold underline">
+            <a href="/register" className="font-semibold underline">
               Register
             </a>
           </p>
@@ -162,27 +162,12 @@ export default function LoginPage({ onLogin }) {
 /** ========================
  * 🏞 Background Carousel Component
  ==========================*/
-function Carousel({ hotels = [] }) {
-  const defaultImages = [
-    '/1.jpeg',
-    '/2.jpeg',
-    '/3.jpeg',
-    '/4.jpeg',
-    '/5.jpeg',
-    '/6.jpeg',
-  ];
-
-  const images =
-    Array.isArray(hotels) && hotels.length > 0
-      ? hotels.flatMap((h) => (h.imageUrl ? [h.imageUrl] : []))
-      : defaultImages;
-
+function Carousel() {
+  const images = ['/1.jpeg','/2.jpeg','/3.jpeg','/4.jpeg','/5.jpeg','/6.jpeg'];
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIdx((i) => (i + 1) % images.length);
-    }, 6000); // Change every 6 seconds
+    const interval = setInterval(() => setIdx(i => (i + 1) % images.length), 6000);
     return () => clearInterval(interval);
   }, [images.length]);
 
