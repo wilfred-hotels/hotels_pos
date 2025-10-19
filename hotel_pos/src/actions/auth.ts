@@ -1,3 +1,4 @@
+import { parseJsonSafe } from './_utils';
 import { apiFetch } from './client';
 import { API } from './index';
 
@@ -29,5 +30,30 @@ export async function login(username: string, password: string, hotelId?: string
 }
 
 export const register = async (payload: any) => apiFetch(API.auth_register, { method: 'POST', body: payload });
-export const checkToken = async () => apiFetch(API.token_check);
-export const refreshToken = async () => apiFetch(API.token_refresh, { method: 'POST' });
+
+export async function authCheck(accessToken: string | null) {
+  console.log("checking the token")
+  const res = await fetch(`${API.token_check}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ accessToken })
+  });
+  if (res.status === 401) {
+    "Token expired"
+  } else {
+    return res.status === 201;
+  }
+}
+
+export async function authRefresh(refreshToken: string): Promise<{ access_token?: string } | null> {
+  console.log("refreshing the token")
+  const res = await fetch(`${API.token_refresh}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) return null;
+  return (await parseJsonSafe(res)) as { access_token?: string } | null;
+}
+

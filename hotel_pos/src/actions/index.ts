@@ -17,7 +17,7 @@ export const API = {
   products: `${BASE}/products`,
   products_for_hotel: (id: string) => `${BASE}/hotels/${id}/products`,
   orders_place: `${BASE}/orders/checkout`,
-  orders: `${BASE}/orders`,
+  orders: (hotelId: string) => `${BASE}/hotels/${hotelId}/orders`,
   hotels: `${BASE}/hotels`,
   hotel: (id: string) => (`${BASE}/hotels/${id}`),
   auth_login: `${BASE}/auth/login`,
