@@ -1,5 +1,5 @@
-import React, { JSX, useState } from 'react';
-import Products from './products.jsx';
+import React, { JSX, useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AddNewSale from './AddNewSale';
 import DashboardSection from './sections/DashboardSection';
 import SalesSection from './sections/SalesSection';
@@ -13,6 +13,8 @@ import StaffSection from './sections/StaffSection';
 import ReportsSection from './sections/ReportsSection';
 import PaymentsSection from './sections/PaymentsSection';
 import SettingsSection from './sections/SettingsSection';
+import toast from 'react-hot-toast';
+import { authCheck, authRefresh } from '../actions/auth';
 
 type NavKey =
   | 'dashboard'
@@ -44,9 +46,85 @@ const navItems: { key: NavKey; label: string; icon?: JSX.Element }[] = [
 ];
 
 const AdminDashboard: React.FC = () => {
-  const [active, setActive] = useState<NavKey>('dashboard');
+  const navigate = useNavigate();
+  const params = useParams();
+  const hotelId = params.hotelId || '';
+  const sectionParam = (params.section as NavKey) || 'dashboard';
+  const [active, setActive] = useState<NavKey>(sectionParam);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<{ name?: string } | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+
+    useEffect(() => {
+    // Run hydration and auth check flow
+    (async () => {
+      setIsHydrated(true);
+      const accessToken = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+
+      if (!accessToken && !refreshToken) {
+        // no tokens -> redirect to login
+        try { localStorage.clear(); } catch (e) {}
+        navigate('/login');
+        return;
+      }
+
+      try {
+        // Prefer quick server validation if access token exists
+        if (accessToken) {
+          const ok = await authCheck(accessToken);
+          if (ok) {
+            const username = localStorage.getItem('username');
+            setUser(username ? { name: username } : null);
+            setIsCheckingAuth(false);
+            return;
+          }
+        }
+
+        // Try refresh if available
+        if (refreshToken) {
+          const refreshed = await authRefresh(refreshToken);
+          if (refreshed && refreshed.access_token) {
+            localStorage.setItem('access_token', refreshed.access_token);
+            const username = localStorage.getItem('username');
+            setUser(username ? { name: username } : null);
+            toast.success('Session refreshed');
+            setIsCheckingAuth(false);
+            return;
+          }
+        }
+
+        // If we get here, tokens are invalid -> clear and redirect
+        try { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); } catch (e) {}
+        setUser(null);
+        toast.error('Session required — please sign in');
+        navigate('/login');
+      } catch (err) {
+        console.error('Auth flow error', err);
+        try { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); } catch (e) {}
+        setUser(null);
+        toast.error('Auth validation failed — please sign in');
+        navigate('/login');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    // when route section changes (eg on initial load), sync to state
+    setActive(sectionParam);
+  }, [sectionParam]);
+
+  const goTo = (key: NavKey) => {
+    setActive(key);
+    // update URL so refresh lands on same section
+    if (hotelId) navigate(`/dashboard/${hotelId}/${key}`);
+    else navigate(`/dashboard/${key}`);
+  };
 
   return (
   <div className="flex w-full h-screen bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100">
@@ -79,7 +157,7 @@ const AdminDashboard: React.FC = () => {
           {navItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => setActive(item.key)}
+              onClick={() => goTo(item.key)}
               className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-md my-1 transition-colors
               ${
                 active === item.key
@@ -116,7 +194,7 @@ const AdminDashboard: React.FC = () => {
           </div>
           <nav className="space-y-1">
             {navItems.map(i => (
-              <button key={i.key} onClick={() => { setActive(i.key); setMobileOpen(false); }} className={`w-full text-left px-2 py-2 rounded ${active === i.key ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
+              <button key={i.key} onClick={() => { goTo(i.key); setMobileOpen(false); }} className={`w-full text-left px-2 py-2 rounded ${active === i.key ? 'bg-slate-200 dark:bg-slate-700' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
                 {i.label}
               </button>
             ))}
