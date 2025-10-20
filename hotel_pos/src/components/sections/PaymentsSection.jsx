@@ -310,7 +310,7 @@ export default function PaymentsSection() {
                     className="w-full px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500/50 focus:border-green-500 backdrop-blur-sm transition-all duration-300"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Amount (KSh)
                   </label>
@@ -321,7 +321,7 @@ export default function PaymentsSection() {
                     onChange={(e) => setStkPush(prev => ({ ...prev, amount: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500/50 focus:border-green-500 backdrop-blur-sm transition-all duration-300"
                   />
-                </div>
+                </div> */}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
