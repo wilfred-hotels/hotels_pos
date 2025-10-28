@@ -168,7 +168,7 @@ export default function ProductsSection() {
           {showAddModal && (
             <motion.div className="absolute inset-0 z-40 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-              <motion.div className="relative z-50 bg-slate-900 rounded-xl p-6 shadow-2xl w-full max-w-md border border-slate-700" initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
+              <motion.div className="relative z-50 bg-slate-900 rounded-xl p-6 shadow-2xl w-full max-w-md sm:max-w-md mx-4 sm:mx-0 border border-slate-700" initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
                 <h4 className="text-xl font-semibold mb-3 text-slate-100">Create Product</h4>
                 <div className="space-y-3">
                   <input className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-slate-100" placeholder="Product name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -196,7 +196,7 @@ export default function ProductsSection() {
           {showEditModal && (
             <motion.div className="absolute inset-0 z-40 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-              <motion.div className="relative z-50 bg-slate-900 rounded-xl p-6 shadow-2xl w-full max-w-md border border-slate-700" initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
+              <motion.div className="relative z-50 bg-slate-900 rounded-xl p-6 shadow-2xl w-full max-w-md sm:max-w-md mx-4 sm:mx-0 border border-slate-700" initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
                 <h4 className="text-xl font-semibold mb-3 text-slate-100">Edit Product</h4>
                 <div className="space-y-3">
                   <input className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-slate-100" placeholder="Product name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
