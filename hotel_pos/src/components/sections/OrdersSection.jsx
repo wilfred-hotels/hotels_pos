@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { listOrders } from '../../actions/orders';
+import { listOrders, getOrderByCode } from '../../actions/orders';
+import toast from 'react-hot-toast';
 
 export default function OrdersSection() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [orderRef, setOrderRef] = useState('');
+  const [refLoading, setRefLoading] = useState(false);
+  const [orderAmount, setOrderAmount] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -26,6 +30,31 @@ export default function OrdersSection() {
     }
   };
 
+  const handleLookup = async () => {
+    if (!orderRef) return;
+    setRefLoading(true);
+    try {
+      const data = await getOrderByCode(orderRef);
+      // API may return the order object directly or wrapped in { data }
+      const order = data && data.id ? data : data?.data || null;
+      if (!order) {
+        toast.error('Order not found');
+        setOrderAmount(null);
+      } else {
+        toast.success('Order found');
+        setOrderAmount(order.total ?? 0);
+        // show only this order in the list for clarity
+        setOrders([order]);
+      }
+    } catch (err) {
+      console.error('Lookup failed', err);
+      toast.error('Failed to fetch order');
+      setOrderAmount(null);
+    } finally {
+      setRefLoading(false);
+    }
+  };
+
   useEffect(() => {
     load();
   }, []);
@@ -33,7 +62,7 @@ export default function OrdersSection() {
   return (
     <div className="space-y-6 p-2">
       {/* Filter Section */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/30">
+  <div className="flex flex-wrap items-center gap-3 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/30">
         <input
           type="date"
           className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-full md:w-48 transition-all duration-300"
@@ -42,6 +71,26 @@ export default function OrdersSection() {
           placeholder="Room # / Source"
           className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-full md:w-40 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-300"
         />
+        <div className="w-full md:w-auto flex gap-2 items-center">
+          <input
+            placeholder="Order Reference (optional)"
+            value={orderRef}
+            onChange={e => setOrderRef(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleLookup(); }}
+            className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl w-full md:w-56 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-300"
+          />
+          <button
+            onClick={() => handleLookup()}
+            disabled={!orderRef || refLoading}
+            className="px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 disabled:opacity-60 transition-colors"
+          >
+            {refLoading ? 'Searching...' : 'Lookup'}
+          </button>
+        </div>
+        {/* show amount when an order is found */}
+        <div className="w-full md:w-auto">
+          <input readOnly value={orderAmount !== null ? `$${Number(orderAmount).toFixed(2)}` : ''} placeholder="Amount" className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl w-full md:w-36 text-right" />
+        </div>
         <button className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
           <svg
             className="w-4 h-4"

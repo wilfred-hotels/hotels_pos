@@ -23,7 +23,7 @@ export const listOrders = async (params?: Record<string, string | number>) => {
   const hid = providedHotelId || resolveHotelId();
   const url = (typeof API.orders === 'function' && hid) ? API.orders(String(hid)) : (typeof API.orders === 'function' ? ((API as any).base ? `${(API as any).base}/orders` : API.orders) : API.orders);
   // diagnostic log to help debug auth/403 issues
-  try { console.debug('[orders.listOrders] url=', url, 'params=', rest, 'hotelId=', hid); } catch (e) {}
+  try { console.debug('[orders.listOrders] url=', url, 'params=', rest, 'hotelId=', hid); } catch (e) { }
   return apiFetch(url as any, Object.keys(rest).length ? { params: rest } : undefined);
 };
 
@@ -37,5 +37,17 @@ export const getOrder = async (id: string | number, hotelId?: string) => {
     const base = (API as any).base || '';
     url = `${base}/orders/${id}`;
   }
+  return apiFetch(url);
+};
+
+// GET /orders/code/:code  (hotel scoped when possible)
+export const getOrderByCode = async (code: string, hotelId?: string) => {
+  const hid = hotelId || resolveHotelId();
+  let url: string;
+
+  const base = (API as any).base || '';
+  url = `${base}/orders/code/${encodeURIComponent(String(code))}`;
+
+  try { console.debug('[orders.getOrderByCode] url=', url, 'code=', code, 'hotelId=', hid); } catch (e) { }
   return apiFetch(url);
 };
