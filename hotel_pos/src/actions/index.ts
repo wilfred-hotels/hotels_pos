@@ -11,7 +11,10 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-const BASE = import.meta.env.VITE_BACKEND_URL ?? '';
+// Allow using `process` in environments where TypeScript's node types are not installed
+declare const process: any;
+
+const BASE = import.meta.env.VITE_BACKEND_URL ?? (typeof process !== 'undefined' && (process.env?.VITE_BACKEND_URL ?? process.env?.BACKEND_URL) ? (process.env?.VITE_BACKEND_URL ?? process.env?.BACKEND_URL) : '');
 
 export const API = {
   payments_mpesa_initiate: `${BASE}/payments/mpesa/initiate`,
@@ -30,7 +33,14 @@ export const API = {
   payments: `${BASE}/payments`,
   payments_stats_summary:`${BASE}/payments/stats/summary`,
   payments_stats_by_provider:`${BASE}/payments/stats/by-provider`,
-  payments_stats_revenue:`${BASE}/payments/stats/revenue-by-day`,
+  payments_stats_revenue: (interval?: 'daily' | 'weekly' | 'monthly', start?: string, end?: string) => {
+    const qs = new URLSearchParams();
+    if (interval) qs.set('interval', interval);
+    if (start) qs.set('start', start);
+    if (end) qs.set('end', end);
+    const q = qs.toString();
+    return `${BASE}/payments/stats/revenue${q ? `?${q}` : ''}`;
+  },
   items: `${BASE}/cart/items`,
   item: (itemId: number) => `${BASE}/cart/items/${itemId}`,
   itemUpdate: (itemId: number, userId: string | number) => `${BASE}/cart/items/${itemId}?userId=${userId}`,
