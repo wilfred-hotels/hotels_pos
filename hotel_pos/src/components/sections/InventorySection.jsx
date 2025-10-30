@@ -243,7 +243,38 @@ export default function InventorySection() {
           </p>
         </div>
 
-        <div className="overflow-auto max-h-96">
+        {/* Mobile: stacked cards */}
+        <div className="md:hidden space-y-3">
+          {filteredInventory.map(item => (
+            <div key={item.id} className="p-4 bg-white/80 dark:bg-slate-900/80 rounded-xl shadow-sm border border-white/10">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-medium text-slate-800 dark:text-slate-200">{item.name}</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">{item.supplier}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.category} • {item.subcategory}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">${item.value}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{item.currentStock} {item.unit}</div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <div className="text-xs">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    item.status === 'critical' ? 'bg-red-100 text-red-700' : item.status === 'warning' ? 'bg-yellow-100 text-yellow-700' : item.status === 'overstock' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                  }`}>{item.status}</span>
+                </div>
+                <div className="flex gap-2">
+                  {item.reorderRecommended && <button className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm">Order</button>}
+                  <button className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-sm">Edit</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block overflow-auto max-h-96">
           <table className="w-full">
             <thead className="bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-sm">
               <tr>
@@ -322,7 +353,7 @@ export default function InventorySection() {
               ))}
             </tbody>
           </table>
-        </div>
+  </div>
       </div>
 
       {/* Quick Stats */}

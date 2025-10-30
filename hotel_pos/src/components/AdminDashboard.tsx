@@ -204,36 +204,33 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 h-full">
-        {/* Header */}
-        <header className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 py-3 border-b bg-white dark:bg-slate-900 dark:border-slate-700">
-          <div>
-            <h1 className="text-xl font-bold">
-              {active === 'dashboard'
-                ? 'Dashboard'
-                : active.charAt(0).toUpperCase() + active.slice(1)}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Admin control panel
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* mobile menu button */}
-            <button className="md:hidden mr-2 p-2 rounded" onClick={() => setMobileOpen(true)} aria-label="Open menu">
-              <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Admin User
+        {/* Header - responsive: stack on mobile, row on md+ */}
+        <header className="flex-shrink-0 flex flex-col md:flex-row md:items-center items-start justify-between px-4 md:px-6 py-3 border-b bg-white dark:bg-slate-900 dark:border-slate-700 gap-3">
+          <div className="flex items-start md:items-center gap-3 w-full md:w-auto justify-between">
+            <div>
+              <h1 className="text-xl font-bold">
+                {active === 'dashboard'
+                  ? 'Dashboard'
+                  : active.charAt(0).toUpperCase() + active.slice(1)}
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Admin control panel</p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
-              A
+            {/* mobile menu button placed here so it's visible on small screens */}
+            <div className="md:hidden">
+              <button className="p-2 rounded" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+                <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              </button>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            <div className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">Admin User</div>
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">A</div>
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-slate-900">
+  {/* Content */}
+  <main className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 dark:bg-slate-900">
           {active === 'dashboard' && (
             <section className="h-full">
               <DashboardSection />

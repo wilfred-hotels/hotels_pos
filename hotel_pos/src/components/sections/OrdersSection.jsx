@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { listOrders } from '../../actions/orders';
+import { listOrders, getOrderByCode } from '../../actions/orders';
+import toast from 'react-hot-toast';
 
 export default function OrdersSection() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [orderRef, setOrderRef] = useState('');
+  const [refLoading, setRefLoading] = useState(false);
+  const [orderAmount, setOrderAmount] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -26,6 +30,31 @@ export default function OrdersSection() {
     }
   };
 
+  const handleLookup = async () => {
+    if (!orderRef) return;
+    setRefLoading(true);
+    try {
+      const data = await getOrderByCode(orderRef);
+      // API may return the order object directly or wrapped in { data }
+      const order = data && data.id ? data : data?.data || null;
+      if (!order) {
+        toast.error('Order not found');
+        setOrderAmount(null);
+      } else {
+        toast.success('Order found');
+        setOrderAmount(order.total ?? 0);
+        // show only this order in the list for clarity
+        setOrders([order]);
+      }
+    } catch (err) {
+      console.error('Lookup failed', err);
+      toast.error('Failed to fetch order');
+      setOrderAmount(null);
+    } finally {
+      setRefLoading(false);
+    }
+  };
+
   useEffect(() => {
     load();
   }, []);
@@ -33,16 +62,36 @@ export default function OrdersSection() {
   return (
     <div className="space-y-6 p-2">
       {/* Filter Section */}
-      <div className="flex items-center gap-3 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/30">
+  <div className="flex flex-wrap items-center gap-3 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/30">
         <input
           type="date"
-          className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-48 transition-all duration-300"
+          className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-full md:w-48 transition-all duration-300"
         />
         <input
           placeholder="Room # / Source"
-          className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-40 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-300"
+          className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 dark:focus:ring-blue-500/50 w-full md:w-40 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-300"
         />
-        <button className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-2">
+        <div className="w-full md:w-auto flex gap-2 items-center">
+          <input
+            placeholder="Order Reference (optional)"
+            value={orderRef}
+            onChange={e => setOrderRef(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleLookup(); }}
+            className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl w-full md:w-56 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-300"
+          />
+          <button
+            onClick={() => handleLookup()}
+            disabled={!orderRef || refLoading}
+            className="px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 disabled:opacity-60 transition-colors"
+          >
+            {refLoading ? 'Searching...' : 'Lookup'}
+          </button>
+        </div>
+        {/* show amount when an order is found */}
+        <div className="w-full md:w-auto">
+          <input readOnly value={orderAmount !== null ? `$${Number(orderAmount).toFixed(2)}` : ''} placeholder="Amount" className="px-4 py-3 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-xl w-full md:w-36 text-right" />
+        </div>
+        <button className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -71,7 +120,58 @@ export default function OrdersSection() {
           </div>
         </div>
 
-        <div className="overflow-auto">
+        {/* Mobile: stacked order cards */}
+        <div className="md:hidden space-y-3 px-4">
+          {(loading ? [] : Array.isArray(orders) ? orders : []).map((s) => (
+            <div key={s.id} className="w-full box-border p-4 bg-white/90 dark:bg-slate-900/90 rounded-xl shadow-sm border border-white/10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-slate-800 dark:text-slate-200 truncate">{s?.code ?? '-'}</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{s?.source ?? '-'}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s?.createdAt ? new Date(s.createdAt).toLocaleString() : '-'}</div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">${Number(s.total ?? 0).toFixed(2)}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{Array.isArray(s?.items) ? s.items.length : 0} items</div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                <div>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    s?.status === 'paid'
+                      ? 'bg-green-100/80 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                      : 'bg-yellow-100/80 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                  }`}>{s?.status === 'paid' ? 'Paid' : 'Not Paid'}</div>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="flex-1 sm:flex-none px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm">{expanded === s.id ? 'Hide' : 'Details'}</button>
+                </div>
+              </div>
+
+              {expanded === s.id && (
+                <div className="mt-3 space-y-2">
+                  {(Array.isArray(s?.items) ? s.items : []).map((item) => (
+                    <div key={item?.id || Math.random()} className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-700 dark:text-slate-200 truncate">{item?.product?.name || item.productId || 'Unknown'}</div>
+                          <div className="text-sm text-slate-500">Qty: {item?.quantity ?? 0}</div>
+                        </div>
+                        {item?.product?.price !== undefined && item?.product?.price !== null && (
+                          <div className="text-sm font-semibold text-slate-600 dark:text-slate-400 ml-4">${Number(item.product.price).toFixed(2)}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block overflow-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80">
               <tr>
