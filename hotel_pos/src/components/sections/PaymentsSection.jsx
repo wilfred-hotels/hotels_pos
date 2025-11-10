@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AdminHeader from '../common/AdminHeader';
 import { getOrderByCode } from '../../actions/orders';
 import { initiateMpesaPayment, fetchPayments } from '../../actions/payments';
 import { getPaymentsSummary, getPaymentsByProvider, getPaymentsRevenue } from '../../actions/stats';
@@ -329,6 +330,7 @@ export default function PaymentsSection() {
 
   return (
     <div className="space-y-6 p-4">
+      <AdminHeader title="Payments" subtitle="Process payments and track transactions" />
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>

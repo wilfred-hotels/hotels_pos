@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AdminHeader from '../common/AdminHeader';
 import { listOrders, getOrderByCode } from '../../actions/orders';
 import toast from 'react-hot-toast';
 
@@ -61,6 +62,7 @@ export default function OrdersSection() {
 
   return (
     <div className="space-y-6 p-2">
+      <AdminHeader title="Orders" subtitle="View and manage orders" />
       {/* Filter Section */}
   <div className="flex flex-wrap items-center gap-3 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 dark:border-slate-700/30">
         <input

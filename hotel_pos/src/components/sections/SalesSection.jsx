@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 const sampleProducts = [
   { id: 1, name: 'Classic Burger', price: 8.5 },
@@ -22,6 +23,7 @@ export default function SalesSection() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
+      <AdminHeader title="Sales" subtitle="Point-of-sale & orders" />
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 flex-1">
         {sampleProducts.map(p => (
           <button key={p.id} onClick={() => add(p)} className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow hover:scale-105 transition-transform">

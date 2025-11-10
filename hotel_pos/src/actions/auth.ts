@@ -57,3 +57,27 @@ export async function authRefresh(refreshToken: string): Promise<{ access_token?
   return (await parseJsonSafe(res)) as { access_token?: string } | null;
 }
 
+/**
+ * Super Admin login action
+ * Posts { username, password } to the /auth/super-admin/login endpoint and returns parsed response.
+ */
+export async function superAdminLogin(username: string, password: string): Promise<any> {
+  const res = await fetch(API.auth_super_admin_login, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+
+  // safe parse
+  let data: any;
+  try {
+    const text = await res.text();
+    data = text ? JSON.parse(text) : undefined;
+  } catch (e) {
+    try { data = await res.json(); } catch (e2) { data = undefined; }
+  }
+
+  if (!res.ok) return data;
+  return data;
+}
+

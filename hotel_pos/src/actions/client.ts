@@ -8,8 +8,10 @@ type FetchOptions = {
 };
 
 function buildUrl(url: string, params?: Record<string, string | number>) {
-  if (!params) return url;
-  const u = new URL(url, window.location.origin);
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const fullUrl = `${baseUrl}${url}`;
+  if (!params) return fullUrl;
+  const u = new URL(fullUrl);
   Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, String(v)));
   return u.toString();
 }

@@ -8,12 +8,14 @@ import toast from 'react-hot-toast';
 export default function LoginPage({ onLogin }) {
   const [hotels, setHotels] = useState([]);
   const [hotelId, setHotelId] = useState("");
+  const [role, setRole] = useState('hotel'); // 'hotel' (Hotel User) or 'super' (Super Admin)
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
   const dropdownRef = React.useRef(null);
+  const [showHotelDebug, setShowHotelDebug] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -26,6 +28,17 @@ export default function LoginPage({ onLogin }) {
       }
     })();
   }, []);
+
+  // When switching to super admin, clear any selected hotel and stored hotel info
+  useEffect(() => {
+    if (role === 'super') {
+      setHotelId('');
+      try {
+        localStorage.removeItem('hotel_id');
+        localStorage.removeItem('hotel_name');
+      } catch (e) {}
+    }
+  }, [role]);
 
   // close dropdown on outside click
   useEffect(() => {
@@ -43,13 +56,21 @@ export default function LoginPage({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    if (!hotelId) {
+    // If login mode is hotel user, ensure a hotel is selected. Super admin does not require hotel.
+    if (role === 'hotel' && !hotelId) {
       setError({ message: 'Please select a hotel' });
       setLoading(false);
       return;
     }
     try {
-  const res = await AuthAPI.login(username, password, hotelId);
+      // For super admin, call the dedicated super-admin login endpoint. For hotel users call normal login.
+      let res;
+      if (role === 'super') {
+        res = await AuthAPI.superAdminLogin(username, password);
+      } else {
+        const paramHotelId = hotelId;
+        res = await AuthAPI.login(username, password, paramHotelId);
+      }
       console.log('Login response:', res);
       // If server returned a validation/error object, show messages and do not store
       if (res && (res.statusCode || res.error || res.message)) {
@@ -72,24 +93,49 @@ export default function LoginPage({ onLogin }) {
             const uid = res.user.id || res.user._id || res.user.userId || '';
             const uname = res.user.username || res.user.name || '';
             const urole = res.user.role || '';
-            if (uid) localStorage.setItem('user_id', String(uid));
-            if (uname) localStorage.setItem('user_name', String(uname));
+            // store keys expected by the app
+            if (uid) localStorage.setItem('userId', String(uid));
+            if (uname) localStorage.setItem('username', String(uname));
             if (urole) localStorage.setItem('user_role', String(urole));
+            // mark super admin in storage when applicable
+            if (role === 'super') {
+              localStorage.setItem('isSuperAdmin', 'true');
+            } else {
+              localStorage.removeItem('isSuperAdmin');
+            }
           }
 
           // store minimal hotel fields (prefer selectedHotel from dropdown)
           try {
-            const hid = (selectedHotel && selectedHotel.id) || (res.user && (res.user.hotelId || res.user.hotel_id)) || hotelId || '';
+            const hid = role === 'super' ? (res.user && (res.user.hotelId || res.user.hotel_id)) || '' : ((selectedHotel && selectedHotel.id) || (res.user && (res.user.hotelId || res.user.hotel_id)) || hotelId || '');
             const hname = (selectedHotel && selectedHotel.name) || '';
-            if (hid) localStorage.setItem('hotel_id', String(hid));
-            if (hname) localStorage.setItem('hotel_name', String(hname));
+            if (hid) {
+              localStorage.setItem('hotel_id', String(hid));
+              if (hname) localStorage.setItem('hotel_name', String(hname));
+            } else {
+              // clear any previous hotel selection for super admins or when none returned
+              localStorage.removeItem('hotel_id');
+              localStorage.removeItem('hotel_name');
+            }
           } catch (e) {}
 
           // keep raw response for debug if needed
           localStorage.setItem('login_response', JSON.stringify(res));
         } catch (e) {}
         toast.success('Signed in successfully');
-        setTimeout(() => { if (onLogin) onLogin(); }, 600);
+        
+        // For super admin, include userId in navigation and ensure storage keys are consistent
+        if (role === 'super' && res.user && (res.user.id || res.user._id || res.user.userId)) {
+          const userId = res.user.id || res.user._id || res.user.userId;
+          // also persist userId with consistent key
+          localStorage.setItem('userId', String(userId));
+          localStorage.setItem('isSuperAdmin', 'true');
+          setTimeout(() => { if (onLogin) onLogin({ isSuperAdmin: true, userId }); }, 600);
+        } else {
+          // Ensure super admin flag removed for hotel users
+          localStorage.removeItem('isSuperAdmin');
+          setTimeout(() => { if (onLogin) onLogin(); }, 600);
+        }
       } else {
         // server returned non-success payload
         toast.error('Login failed: invalid response');
@@ -137,7 +183,7 @@ export default function LoginPage({ onLogin }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
       >
-        <div className="bg-blue-900/70 backdrop-blur-2xl border border-blue-700/40 shadow-2xl rounded-3xl w-full max-w-md p-8 md:p-10 text-white">
+  <div className="bg-blue-900/70 backdrop-blur-2xl border border-blue-700/40 shadow-2xl rounded-3xl w-full max-w-lg p-10 md:p-12 text-white">
           <motion.h2
             className="text-4xl font-extrabold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500"
             initial={{ y: -20, opacity: 0 }}
@@ -151,7 +197,44 @@ export default function LoginPage({ onLogin }) {
           </p>
 
           <form onSubmit={submit} className="space-y-4">
-            {/* Custom dropdown */}
+            {/* Role segmented control */}
+            <div className="flex items-center justify-center mb-2">
+              <div className="relative inline-flex bg-white/5 rounded-xl p-1">
+                <button
+                  type="button"
+                  onClick={() => { setRole('super'); setError(null); }}
+                  className={`relative px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${role === 'super' ? 'text-white' : 'text-white/70'}`}
+                >
+                  <span className="text-xs">🧠</span>
+                  <span>Super Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRole('hotel'); setError(null); }}
+                  className={`relative px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${role === 'hotel' ? 'text-white' : 'text-white/70'}`}
+                >
+                  <span className="text-xs">🏨</span>
+                  <span>Hotel User</span>
+                </button>
+                {/* active indicator */}
+                <motion.div
+                  layout
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="absolute inset-0 rounded-lg pointer-events-none"
+                  style={{
+                    background: role === 'super' ? 'linear-gradient(90deg,#06b6d4,#7c3aed)' : 'linear-gradient(90deg,#3b82f6,#7c3aed)',
+                    opacity: 0.12,
+                    mixBlendMode: 'screen'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Tagline per role */}
+            <div className="text-center text-xs text-white/70 mb-2">
+              {role === 'super' ? 'Global access for system control and catalog management.' : 'Access your hotel dashboard.'}
+            </div>
+            {role === 'hotel' && (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
@@ -190,6 +273,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
               )}
             </div>
+            )}
 
             <input
               className="w-full bg-white/15 border border-white/20 rounded-lg p-3 text-white placeholder-white/70 focus:ring-2 focus:ring-blue-400 focus:outline-none"

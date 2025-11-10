@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 export default function StaffSection() {
   const [activeView, setActiveView] = useState('directory');
@@ -156,6 +157,7 @@ export default function StaffSection() {
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem', color: '#e2e8f0'}}>
+      <AdminHeader title="Staff" subtitle="Manage employees and schedules" />
       {/* Header */}
       <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start'}}>
         <div>

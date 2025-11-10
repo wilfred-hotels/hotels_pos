@@ -25,6 +25,7 @@ export const API = {
   hotels: `${BASE}/hotels`,
   hotel: (id: string) => (`${BASE}/hotels/${id}`),
   auth_login: `${BASE}/auth/login`,
+  auth_super_admin_login: `${BASE}/auth/super-admin/login`,
   auth_register: `${BASE}/auth/register`,
   token_check: `${BASE}/auth/check`,
   token_refresh: `${BASE}/auth/refresh`,
