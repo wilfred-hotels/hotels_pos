@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart,
@@ -51,25 +51,10 @@ interface FilterState {
   limit: number;
 }
 
-// Mock data - replace with actual API calls
-const mockProducts: Product[] = Array.from({ length: 50 }, (_, i) => ({
-  id: `prod${i + 1}`,
-  name: ['Deluxe Coffee', 'Breakfast Set', 'Room Service', 'Spa Package', 'Business Lunch'][Math.floor(Math.random() * 5)],
-  hotelId: `hotel${Math.floor(Math.random() * 3) + 1}`,
-  hotelName: ['Grand Hotel', 'Plaza Inn', 'Seaside Resort'][Math.floor(Math.random() * 3)],
-  category: ['Food', 'Beverage', 'Service', 'Amenity'][Math.floor(Math.random() * 4)],
-  price: Math.random() * 100 + 10,
-  isAvailable: Math.random() > 0.2,
-  tags: ['premium', 'popular', 'seasonal', 'special'].slice(0, Math.floor(Math.random() * 3) + 1),
-  description: 'Product description here',
-  imageUrl: 'https://example.com/image.jpg',
-  inventory: Math.floor(Math.random() * 100),
-  createdAt: new Date(2025, 10, Math.floor(Math.random() * 30) + 1).toISOString()
-}));
+import { getAdminProducts } from '../../actions/products';
 
-const categories = [...new Set(mockProducts.map(p => p.category))];
-const hotels = [...new Set(mockProducts.map(p => ({ id: p.hotelId, name: p.hotelName })))];
-const allTags = [...new Set(mockProducts.flatMap(p => p.tags))];
+// We'll fetch real products from the admin API and map to the UI Product shape.
+const PLACEHOLDER_IMG = 'https://via.placeholder.com/400x300?text=Product';
 
 const COLORS = {
   primary: '#4F46E5',
@@ -97,7 +82,52 @@ const ProductsSection: React.FC<SectionProps> = ({ userId }) => {
     limit: 10
   });
 
-  const filteredProducts = mockProducts.filter(product => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res: any[] = await getAdminProducts();
+        // Map backend shape to UI Product shape
+        const mapped = res.map((p: any) => ({
+          id: String(p.id),
+          name: p.name || '',
+          hotelId: p.hotelId || p.hotel?.id || '',
+          hotelName: p.hotel?.name || p.hotelName || '',
+          category: p.category || '',
+          price: Number(p.price ?? 0),
+          isAvailable: (p.stock ?? p.inventory ?? 0) > 0,
+          tags: Array.isArray(p.tags) ? p.tags : [],
+          description: p.description || '',
+          imageUrl: p.imageUrl || PLACEHOLDER_IMG,
+          inventory: Number(p.stock ?? p.inventory ?? 0),
+          createdAt: p.createdAt || p.created_at || ''
+        })) as Product[];
+        if (mounted) setProducts(mapped);
+      } catch (e: any) {
+        if (mounted) setError(e?.message || 'Failed to load products');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
+
+  const categories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
+  const hotels = useMemo(() => {
+    const map = new Map<string,string>();
+    products.forEach(p => { if (p.hotelId) map.set(p.hotelId, p.hotelName || p.hotelId); });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [products]);
+  const allTags = useMemo(() => [...new Set(products.flatMap(p => p.tags || []))], [products]);
+
+  const filteredProducts = products.filter(product => {
     const matchesName = !filters.name || product.name.toLowerCase().includes(filters.name.toLowerCase());
     const matchesHotel = !filters.hotelId || product.hotelId === filters.hotelId;
     const matchesCategory = !filters.category || product.category === filters.category;
@@ -410,10 +440,7 @@ const ProductsSection: React.FC<SectionProps> = ({ userId }) => {
 
               <div className="flex space-x-3">
                 <button className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
-                  Edit
-                </button>
-                <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors hover:border-indigo-500 dark:hover:border-indigo-500">
-                  View Details
+                   View Details
                 </button>
               </div>
             </div>

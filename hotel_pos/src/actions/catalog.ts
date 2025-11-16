@@ -1,4 +1,8 @@
 import { mockProducts, mockCategories } from '../data/mockData';
+import { apiFetch } from './client';
+import { API } from './index';
+
+
 
 export interface ProductData {
   id?: string;
@@ -50,38 +54,21 @@ export const getCatalogProducts = async (
     order?: 'asc' | 'desc';
   }
 ) => {
-  // Filter and sort the mock products
-  let filteredProducts = [...mockProducts];
-  
-  if (filters?.categoryId) {
-    filteredProducts = filteredProducts.filter(p => p.categoryId === filters.categoryId);
+  // Try to fetch real catalog products from backend; fall back to mock data on error
+  try {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const data = await apiFetch(API.catalog_products as any, headers ? { headers } : undefined);
+    console.log("Fetched catalog products:", data);
+    // normalize commonly seen shapes: array or { data: [...] }
+    const list = Array.isArray(data) ? data : (data && Array.isArray((data as any).data) ? (data as any).data : null);
+    if (list) return list;
+  } catch (err) {
+    // ignore and fall back to mock data
+    console.warn('getCatalogProducts: backend fetch failed, using mock data', err);
   }
-  
-  if (filters?.search) {
-    const searchLower = filters.search.toLowerCase();
-    filteredProducts = filteredProducts.filter(p => 
-      p.name.toLowerCase().includes(searchLower) || 
-      p.description?.toLowerCase().includes(searchLower)
-    );
-  }
-  
-  if (filters?.sortBy) {
-    filteredProducts.sort((a, b) => {
-      const order = filters.order === 'desc' ? -1 : 1;
-      switch (filters.sortBy) {
-        case 'name':
-          return order * a.name.localeCompare(b.name);
-        case 'price':
-          return order * (a.price - b.price);
-        case 'createdAt':
-          return -1; // Mock data doesn't track creation time, default to no change
-        default:
-          return 0;
-      }
-    });
-  }
-  
-  return Promise.resolve(filteredProducts);
+
+  // Fallback: return mock products
+  return Promise.resolve(mockProducts);
 };
 
 // Add a new product
@@ -146,16 +133,18 @@ export const getCategories = async (token: string, userId?: string) => {
   return Promise.resolve(mockCategories);
 };
 
-// Add a new category
-export const addCategory = async (
-  token: string,
-  userId: string,
-  categoryData: CategoryData
-) => {
-  const newCategory = {
-    ...categoryData,
-    id: `cat${mockCategories.length + 1}`
-  };
-  mockCategories.push(newCategory);
-  return Promise.resolve(newCategory);
+export const createCatalogProduct = async (payload: any) => {
+  const tokenKeys = ['access_token', 'access token', 'token', 'auth_token', 'authToken'];
+  let token: string | null = null;
+  if (typeof window !== 'undefined') {
+    for (const k of tokenKeys) {
+      const t = localStorage.getItem(k);
+      if (t) { token = t; break; }
+    }
+  }
+  // POST to admin products endpoint
+  const res = await apiFetch(API.catalog_products as any, { method: 'POST', body: payload, headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+  // backend commonly returns { data: {...} } or the created resource directly
+  if (res && (res.data || res.data === null)) return res.data || res;
+  return res;
 };
