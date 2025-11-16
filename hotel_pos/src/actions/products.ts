@@ -24,6 +24,42 @@ export const getProducts = async (hotelId?: string) => {
 	return [] as any[];
 };
 
+// Admin /super-admin products listing
+export const getAdminProducts = async () => {
+	// This endpoint typically returns { data: [...] , metadata: {...} }
+	// Ensure we include the access token explicitly if present in localStorage
+	const tokenKeys = ['access_token', 'access token', 'token', 'auth_token', 'authToken'];
+	let token: string | null = null;
+	if (typeof window !== 'undefined') {
+		for (const k of tokenKeys) {
+			const t = localStorage.getItem(k);
+			if (t) { token = t; break; }
+		}
+	}
+	const data = await apiFetch(API.admin_products as any, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+	if (Array.isArray(data)) return data;
+	if (data && Array.isArray((data as any).data)) return (data as any).data;
+	return [] as any[];
+};
+
+export const createAdminProduct = async (payload: any) => {
+	const tokenKeys = ['access_token', 'access token', 'token', 'auth_token', 'authToken'];
+	let token: string | null = null;
+	if (typeof window !== 'undefined') {
+		for (const k of tokenKeys) {
+			const t = localStorage.getItem(k);
+			if (t) { token = t; break; }
+		}
+	}
+	// POST to admin products endpoint
+	const res = await apiFetch(API.admin_products as any, { method: 'POST', body: payload, headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+	// backend commonly returns { data: {...} } or the created resource directly
+	if (res && (res.data || res.data === null)) return res.data || res;
+	return res;
+};
+
+
+
 export const getProductsForHotel = async (hotelId: string) => {
 	const data = await apiFetch(API.products_for_hotel(hotelId) as any);
 	if (Array.isArray(data)) return data;

@@ -19,12 +19,16 @@ const BASE = import.meta.env.VITE_BACKEND_URL ?? (typeof process !== 'undefined'
 export const API = {
   payments_mpesa_initiate: `${BASE}/payments/mpesa/initiate`,
   products: `${BASE}/products`,
+  // Admin-facing products endpoint (super-admin)
+  admin_products: `${BASE}/admin/products`,
+  catalog_products: `${BASE}/catalog`,
   products_for_hotel: (id: string) => `${BASE}/hotels/${id}/products`,
   orders_place: `${BASE}/orders/checkout`,
   orders: (hotelId: string) => `${BASE}/hotels/${hotelId}/orders`,
   hotels: `${BASE}/hotels`,
   hotel: (id: string) => (`${BASE}/hotels/${id}`),
   auth_login: `${BASE}/auth/login`,
+  auth_super_admin_login: `${BASE}/auth/super-admin/login`,
   auth_register: `${BASE}/auth/register`,
   token_check: `${BASE}/auth/check`,
   token_refresh: `${BASE}/auth/refresh`,

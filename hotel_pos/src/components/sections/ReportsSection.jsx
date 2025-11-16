@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 export default function ReportsSection() {
   const [loading, setLoading] = useState(true);
@@ -113,6 +114,7 @@ export default function ReportsSection() {
 
   return (
     <div className="space-y-6 p-4">
+      <AdminHeader title="Reports" subtitle="Performance & exports" />
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>

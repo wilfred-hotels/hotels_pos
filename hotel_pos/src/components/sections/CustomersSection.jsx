@@ -1,4 +1,5 @@
 import React from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 const CustomerCard = ({name, room, total, vip}) => (
   <div className="bg-white dark:bg-slate-800 rounded-lg p-3 shadow flex items-center gap-3">
@@ -13,6 +14,7 @@ const CustomerCard = ({name, room, total, vip}) => (
 export default function CustomersSection(){
   return (
     <div className="space-y-4">
+      <AdminHeader title="Customers" subtitle="Manage guests and contact information" />
       <div className="flex items-center gap-2">
         <input placeholder="Search customers" className="flex-1 p-2 border rounded" />
         <button className="px-3 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded">Search</button>

@@ -16,7 +16,13 @@ function App() {
       <Routes>
         {/* root redirects to dashboard with hotel id when available, otherwise to login */}
         <Route path="/" element={<Navigate to={storedHotel ? `/dashboard/${storedHotel}/dashboard` : '/login'} replace />} />
-        <Route path="/login" element={<LoginPage onLogin={() => {
+        <Route path="/login" element={<LoginPage onLogin={(opts) => {
+          // opts may be undefined or an object like { isSuperAdmin: true, userId }
+          if (opts && opts.isSuperAdmin && opts.userId) {
+            // navigate super admin to their dashboard (userId used as the route param)
+            window.location.href = `/dashboard/${opts.userId}/dashboard`;
+            return;
+          }
           const hid = localStorage.getItem('hotel_id') || localStorage.getItem('hotelId');
           window.location.href = hid ? `/dashboard/${hid}/dashboard` : '/login';
         }} />} />

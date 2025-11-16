@@ -8,8 +8,12 @@ type FetchOptions = {
 };
 
 function buildUrl(url: string, params?: Record<string, string | number>) {
-  if (!params) return url;
-  const u = new URL(url, window.location.origin);
+  // Support both VITE_API_URL and VITE_BACKEND_URL env names and accept absolute URLs.
+  const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+  // If `url` is already an absolute URL, use it directly.
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  if (!params) return fullUrl;
+  const u = new URL(fullUrl);
   Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, String(v)));
   return u.toString();
 }

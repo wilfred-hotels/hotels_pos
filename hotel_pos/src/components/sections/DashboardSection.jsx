@@ -566,6 +566,7 @@
 //   );
 // }
 import React, { useState, useEffect } from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 const AnimatedKPI = ({ title, value, subtitle, gradient, delay = 0 }) => {
   const [displayValue, setDisplayValue] = useState(0);
@@ -878,6 +879,7 @@ export default function DashboardSection() {
     <>
       <GlobalStyles />
       <div className="space-y-6 p-4 text-slate-200">
+        <AdminHeader title="Dashboard" subtitle="Overview of hotel operations" />
         {/* Header with last update */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>

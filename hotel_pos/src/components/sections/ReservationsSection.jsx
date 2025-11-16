@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AdminHeader from '../common/AdminHeader';
 
 export default function ReservationsSection() {
   const [loading, setLoading] = useState(true);
@@ -217,6 +218,7 @@ export default function ReservationsSection() {
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem', color: '#e2e8f0'}}>
+      <AdminHeader title="Reservations" subtitle="Manage bookings, allocations & arrivals" />
       {/* Header */}
       <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start'}}>
         <div>

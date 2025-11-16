@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AdminHeader from '../common/AdminHeader';
 import ProductsAPI from '../../actions/products';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,6 +124,7 @@ export default function ProductsSection() {
 
   return (
     <div className="space-y-6 text-slate-100">
+      <AdminHeader title="Products" subtitle="Manage items available at this hotel" />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Products</h2>
